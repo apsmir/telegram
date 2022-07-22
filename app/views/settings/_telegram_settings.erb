@@ -1,0 +1,29 @@
+<table>
+  <tbody>
+  <tr>
+    <th style="text-align: right">Enabled</th>
+    <td>
+      <%= hidden_field_tag 'settings[bot_enabled]', 0, :id => nil %>
+      <%= check_box_tag 'settings[bot_enabled]', 1, @settings["bot_enabled"].to_i > 0 %>
+    </td>
+  </tr>
+  <tr>
+    <th style="text-align: right">Bot Token</th>
+    <td>
+      <input type="text" id="settings_bot_token"
+             size="50"
+             value="<%= settings['bot_token'] %>"
+             name="settings[bot_token]" >
+    </td>
+  </tr>
+  <tr>
+    <th style="text-align: right">Bot Username</th>
+    <td>
+      <input type="text" id="settings_bot_username"
+             size="50"
+             value="<%= settings['bot_username'] %>"
+             name="settings[bot_username]" >
+    </td>
+  </tr>
+  </tbody>
+</table>

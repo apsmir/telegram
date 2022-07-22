@@ -1,0 +1,1 @@
+gem 'telegram-bot', github: 'apsmir/telegram-bot'
