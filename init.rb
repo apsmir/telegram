@@ -37,7 +37,7 @@ t = Thread.new {
         bot_run = false
       end
     rescue Exception => e
-      puts "Telegram bot error #{e}"
+      logger.error "Telegram bot error #{e}"
       sleep 1.minute
     end
   end
