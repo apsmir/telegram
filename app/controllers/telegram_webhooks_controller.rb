@@ -90,11 +90,32 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
       issue = Issue.new(attributes.reverse_merge(:notify => false))
       issue.project = Project.find(session[:active_project_id])
       issue.tracker ||= issue.project.trackers.first
-      issue.subject = 'Generated' if issue.subject.blank?
+      issue.subject = args.take(5).join(' ')
       issue.author ||= User.find(session[:user_id])
-      issue.description = args.join(' ')
+      issue.description = t('.description',
+                            fio: session[:fio],
+                            email: session[:email],
+                            phone: session[:phone],
+                            text: args.join(' '))
       if issue.save
+        session[:active_issue] = issue.id
+        save_context :add_description_context
         respond_with :message, text: t('.success', id: issue.id)
+      else
+        raise Exception.new(issue.errors.full_messages)
+      end
+    rescue Exception => e
+      respond_with :message, text: t('.error', e: e)
+    end
+  end
+
+  def add_description_context(*args)
+    begin
+      issue = Issue.find(session[:active_issue])
+      issue.description+= ' '+ args.join(' ')
+      if issue.save
+        #respond_with :message, text: t('.success', id: issue.id)
+        answer_callback_query t('.alert'), show_alert: true
       else
         raise Exception.new(issue.errors.full_messages)
       end
@@ -116,6 +137,8 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
     obj = JSON.parse(data, object_class: OpenStruct)
     if obj.action == 'get_issue_description'
       get_issue_description(obj)
+    else
+      answer_callback_query 'description added'
     end
     #if session[:context] == 'new_issue!'
     #  new_issue!([data])

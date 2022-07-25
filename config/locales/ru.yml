@@ -63,6 +63,18 @@ en:
     create_issue:
       success: 'Задача успешно создана. Номер задачи %{id}'
       error: 'Ошибка создания задачи %{e}'
+      description: |
+        =====================
+        Заявка из Телеграм
+        
+         ФИО: %{fio}
+        email: %{email}
+        тел.: %{phone}
+        
+        =====================
+        %{text}
+    add_description_context:
+      error: 'Ошибка добавления описания задачи %{e}'
     menu:
       - item:
           command: help
