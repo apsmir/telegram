@@ -112,10 +112,11 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
   def add_description_context(*args)
     begin
       issue = Issue.find(session[:active_issue])
-      issue.description+= ' '+ args.join(' ')
+      issue.description+= "\n" +args.join(' ')
       if issue.save
-        #respond_with :message, text: t('.success', id: issue.id)
-        answer_callback_query t('.alert'), show_alert: true
+        save_context :add_description_context
+        respond_with :message, text: t('.success', id: issue.id)
+        #answer_callback_query t('.alert'), show_alert: true
       else
         raise Exception.new(issue.errors.full_messages)
       end

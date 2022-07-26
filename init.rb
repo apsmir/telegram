@@ -1,3 +1,5 @@
+require File.dirname(__FILE__) + '/lib/redmine_hooks/issues_edit_after_save_hook.rb'
+
 Redmine::Plugin.register :telegram do
   name 'Redmine telegram bot plugin'
   author 'Alexey Smirnov'
