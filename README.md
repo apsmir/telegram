@@ -17,8 +17,18 @@ $ git clone https://github.com/apsmir/telegram.git
 ```
 $ bundle install
 ```
+* set rigths
+```
+$ cd plugins/telegram
+$ chmod +x start_poller.sh
+$ chmod +x stop_poller.sh
+```
 * Restart Redmine
 * In Admin panel (e.g. http://localhost:3000/settings/plugin/telegram) set parameters
   * Enabled
   * Bot Token 	
   * Bot Username
+* Run Telegram poller
+```
+$ ./start_poller.sh
+```
