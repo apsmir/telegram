@@ -9,6 +9,7 @@ namespace :telegram do
         console = ActiveSupport::Logger.new(STDERR)
         Rails.logger.extend ActiveSupport::Logger.broadcast console
       end
+      Poller::init()
       Poller::start()
     end
   end

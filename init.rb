@@ -9,9 +9,9 @@ Redmine::Plugin.register :telegram do
   settings default: {'empty' => true}, partial: 'settings/telegram_settings'
 end
 
-Poller::init()
 
 if Rails.env.development?
+  Poller::init()
   t = Thread.new {
     Poller::start()
 }

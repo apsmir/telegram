@@ -1,5 +1,6 @@
 class TelegramWebhooksController < Telegram::Bot::UpdatesController
   include Telegram::Bot::UpdatesController::MessageContext
+  include Telegram::Bot::UpdatesController::Session
 
   def start!(*args)
     field = session[:field]
@@ -51,8 +52,10 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
         end
       end
       session[:user_id] = u.id
+      session[:chat_id] = chat_id
       return true
     rescue Exception => e
+      session[:field] = nil
       respond_with :message, text: t('.register_user_error', e: e)
       return false
     end
@@ -112,7 +115,12 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
   def add_description_context(*args)
     begin
       issue = Issue.find(session[:active_issue])
-      issue.description+= "\n" +args.join(' ')
+      if issue.journals.empty?
+        issue.description+= "\n" +args.join(' ')
+      else
+        user = User.find_by_id(session['user_id'])
+        issue.init_journal(user, args.join(' '))
+      end
       if issue.save
         save_context :add_description_context
         respond_with :message, text: t('.success', id: issue.id)
