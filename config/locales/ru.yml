@@ -1,5 +1,7 @@
 
 en:
+  tg_issue_response: "ответил "
+  tg_issue_closed: "Задача закрыта. Номер задачи"
   telegram_webhooks:
     action_missing:
       command: Can not perform %{command}
@@ -58,7 +60,7 @@ en:
         - /list Список заявок
         - /new Новая заявка
     new_issue:
-      prompt: выберите раздел
+      prompt: Выберите раздел, в котором будет создана новая заявка
       description: Текст задачи
     projects:
       prompt: выберите проект

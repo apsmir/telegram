@@ -1,6 +1,7 @@
 module RedmineHooks
   class IssuesEditAfterSaveHook < Redmine::Hook::Listener
-    include Telegram::Bot::ConfigMethods
+    #include Telegram::Bot::ConfigMethods
+    #include Telegram::Bot::UpdatesController::Translation
 
     def search_dir(dir, &callback)
       return if !File.exist?(dir)
@@ -19,38 +20,38 @@ module RedmineHooks
       URI.decode_www_form_component(fname, Encoding::UTF_8)
     end
 
-    def controller_issues_edit_after_save (context = { })
-      if Setting.plugin_telegram['bot_enabled'].to_i < 1
-        return
-      end
-      issue = context[:issue]
-      notes = context[:journal].attributes['notes']
-      created_on = context[:journal].attributes['created_on']
-      msg_time = issue.author.convert_time_to_user_timezone(created_on).strftime('%H:%M')
+    def send_message(chat_id, text)
+      Thread.new {
+        begin
+          client = Telegram::Bot::Client.new(Setting.plugin_telegram['bot_token'])
+          client.async(false)
+          client.send_message(chat_id: "#{chat_id}", text: text)
+        rescue Exception => e
+          Rails.logger.error "Telegram bot error #{e}"
+        end
+      }
+    end
 
-      if notes
-        user_id = context[:journal].attributes['user_id']
-        user = User.find_by_id(user_id)
-        Thread.new {
-          begin
-            store = Telegram::Bot::UpdatesController.session_store
-            cache_path = store.cache_path
-            search_dir(cache_path) do |fname|
-              key = file_path_key(cache_path, fname)
-              session = store.fetch(key)
-              chat_id = session['chat_id']
-              if chat_id && (session['user_id'] == issue.author_id)
-                token = Setting.plugin_telegram['bot_token']
-                client = Telegram::Bot::Client.new(token)
-                client.async(false)
-                client.send_message(chat_id: "#{chat_id}",
-                                    text: "#{msg_time} #{user.firstname} ответил: #{notes}")
-              end
-            end
-          rescue Exception => e
-            Rails.logger.error "Telegram bot error #{e}"
+    def controller_issues_edit_after_save (context = { })
+      return unless Setting.plugin_telegram['bot_enabled'].to_i > 0
+
+      issue = context[:issue]
+
+      if !issue.notes.empty? || !issue.closed_on.nil?
+        journal = context[:journal]
+        msg_time = issue.author.convert_time_to_user_timezone(journal.created_on).strftime('%H:%M')
+        user = User.find_by_id(journal.user_id)
+        store = Telegram::Bot::UpdatesController.session_store
+        cache_path = store.cache_path
+        search_dir(cache_path) do |fname|
+          session = store.fetch(file_path_key(cache_path, fname))
+          chat_id = session['chat_id']
+          if chat_id && (session['user_id'] == issue.author_id)
+            send_message(chat_id, "#{msg_time} #{user.firstname} #{l(:tg_issue_response)}: #{issue.notes}") unless issue.notes.empty?
+            sleep 0.1
+            send_message(chat_id, "#{msg_time} #{l(:tg_issue_closed)}: #{issue.id}") unless issue.closed_on.nil?
           end
-        }
+        end
       end
     end
   end

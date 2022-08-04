@@ -2,6 +2,21 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
   include Telegram::Bot::UpdatesController::MessageContext
   include Telegram::Bot::UpdatesController::Session
 
+  def t(key, **options)
+    if key.to_s.start_with?('.')
+      path = controller_path.tr('/', '.')
+      defaults = [:"#{path}#{key}"]
+      defaults << options[:default] if options[:default]
+      options[:default] = defaults.flatten
+      if session[:context].blank?
+        key = "#{path}.#{action_name_i18n_key}#{key}"
+      else
+        key = "#{path}.#{session[:context]}#{key}"
+      end
+    end
+    I18n.translate(key, **options)
+  end
+
   def start!(*args)
     field = session[:field]
     if field.blank?
@@ -83,8 +98,14 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
 
   def get_issue_description (action_obj)
     session[:active_project_id] = action_obj.project_id
-    respond_with :message, text: t('.get_issue_description')
-    save_context :create_issue
+    new_issue_description = session[:new_issue_description]
+    if new_issue_description.blank?
+      respond_with :message, text: t('.get_issue_description')
+      save_context :create_issue
+    else
+      save_context :create_issue
+      create_issue(new_issue_description)
+    end
   end
 
   def create_issue(*args)
@@ -100,10 +121,11 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
                             email: session[:email],
                             phone: session[:phone],
                             text: args.join(' '))
+      session[:new_issue_description] = nil
       if issue.save
         session[:active_issue] = issue.id
-        save_context :add_description_context
         respond_with :message, text: t('.success', id: issue.id)
+        save_context :add_description_context
       else
         raise Exception.new(issue.errors.full_messages)
       end
@@ -115,18 +137,26 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
   def add_description_context(*args)
     begin
       issue = Issue.find(session[:active_issue])
-      if issue.journals.empty?
-        issue.description+= "\n" +args.join(' ')
+      if issue.closed_on.nil?
+        if issue.journals.empty?
+          issue.description+= "\n" +args.join(' ')
+        else
+          user = User.find_by_id(session['user_id'])
+          issue.init_journal(user, args.join(' '))
+        end
+        if issue.save
+          save_context :add_description_context
+          respond_with :message, text: t('.success', id: issue.id)
+          #answer_callback_query t('.alert'), show_alert: true
+        else
+          raise Exception.new(issue.errors.full_messages)
+        end
       else
-        user = User.find_by_id(session['user_id'])
-        issue.init_journal(user, args.join(' '))
-      end
-      if issue.save
-        save_context :add_description_context
-        respond_with :message, text: t('.success', id: issue.id)
-        #answer_callback_query t('.alert'), show_alert: true
-      else
-        raise Exception.new(issue.errors.full_messages)
+        # create new issue
+        session[:active_issue] = nil
+        session[:new_issue_description] = args
+        save_context :new_issue
+        new_issue!([])
       end
     rescue Exception => e
       respond_with :message, text: t('.error', e: e)
