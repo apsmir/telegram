@@ -134,20 +134,38 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
     end
   end
 
+  def add_photo_to_issue(issue, user)
+    begin
+      file = bot.get_file({file_id: payload['photo'].last['file_id']})
+      file_name = file['result']['file_path']
+      uri = "https://api.telegram.org/file/bot#{bot.token}/#{file_name}"
+      response = bot.client.get(uri)
+      att = Attachment.create(:container => issue,
+                              :file => response.body,
+                              :filename => file_name,
+                              :author => user)
+      issue.attachments << att
+      return att
+    rescue Exception => e
+      respond_with :message, text: t('.error', e: e)
+    end
+  end
+
   def add_description_context(*args)
     begin
       issue = Issue.find(session[:active_issue])
+      user = User.find_by_id(session['user_id'])
       if issue.closed_on.nil?
+        attachment = add_photo_to_issue(issue, user) unless payload['photo'].nil?
         if issue.journals.empty?
           issue.description+= "\n" +args.join(' ')
         else
-          user = User.find_by_id(session['user_id'])
           issue.init_journal(user, args.join(' '))
+          issue.current_journal.journalize_attachment(attachment, :added) unless attachment.nil?
         end
+        save_context :add_description_context
         if issue.save
-          save_context :add_description_context
           respond_with :message, text: t('.success', id: issue.id)
-          #answer_callback_query t('.alert'), show_alert: true
         else
           raise Exception.new(issue.errors.full_messages)
         end
