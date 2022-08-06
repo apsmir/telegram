@@ -81,6 +81,13 @@ en:
     add_description_context:
       success: 'Записано в задачу %{id}'
       error: 'Ошибка добавления описания задачи %{e}'
+    my_issues:
+      prompt: Выберите задачу для просмотра
+      caption: '%{caption}'
+    set_issue_context:
+      notice: |
+        %{caption} 
+        %{description}
     menu:
       - item:
           command: help

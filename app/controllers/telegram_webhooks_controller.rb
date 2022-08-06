@@ -181,6 +181,25 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
     end
   end
 
+  def set_issue_context(action_obj)
+    session[:active_issue] = action_obj.issue_id
+    save_context :set_issue_context
+    issue = Issue.find(action_obj.issue_id)
+    respond_with :message, text: t('.notice', caption: issue.to_s, description: issue.description)
+    save_context :add_description_context
+  end
+
+  def my_issues!(*args)
+    callback_action = 'set_issue_context'
+    list = Issue.where(author_id: session[:user_id], closed_on: nil).map {|issue|
+        [{
+          text: t('.caption', caption:issue.to_s) ,
+          callback_data: "{ \"action\": \"#{callback_action}\", \"issue_id\": \"#{issue.id}\" }"
+         }]
+      }
+      respond_with :message, text: t('.prompt'), reply_markup: { inline_keyboard: list }
+  end
+
   def list_projects (callback_action = action_name)
     list = Project.find_each.map {|project|
       {text: project.name, callback_data: "{ \"action\": \"#{callback_action}\", \"project_id\": \"#{project.id}\" }"}
@@ -192,11 +211,21 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
 
   def callback_query(data)
     obj = JSON.parse(data, object_class: OpenStruct)
-    if obj.action == 'get_issue_description'
-      get_issue_description(obj)
+    case obj.action
+      when 'get_issue_description'
+        get_issue_description(obj)
+        return
+      when 'set_issue_context'
+        set_issue_context(obj)
+        return
     else
       answer_callback_query 'description added'
     end
+    #if obj.action == 'get_issue_description'
+    #  get_issue_description(obj)
+    #else
+    #  answer_callback_query 'description added'
+    #end
     #if session[:context] == 'new_issue!'
     #  new_issue!([data])
     #end

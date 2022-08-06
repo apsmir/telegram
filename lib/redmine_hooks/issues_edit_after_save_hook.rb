@@ -63,7 +63,6 @@ module RedmineHooks
 
       issue = context[:issue]
       journal = context[:journal]
-      #files = get_files(context)
 
       if !issue.notes.empty? || !issue.closed_on.nil? || journal
         msg_time = issue.author.convert_time_to_user_timezone(journal.created_on).strftime('%H:%M')
