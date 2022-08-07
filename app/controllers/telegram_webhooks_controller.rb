@@ -181,12 +181,61 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
     end
   end
 
+  def u_time(utc_time, issue)
+    issue.author.convert_time_to_user_timezone(utc_time).strftime('%d-%m-%Y %H:%M')
+  end
+
   def set_issue_context(action_obj)
     session[:active_issue] = action_obj.issue_id
     save_context :set_issue_context
     issue = Issue.find(action_obj.issue_id)
-    respond_with :message, text: t('.notice', caption: issue.to_s, description: issue.description)
+    closed_on = issue.closed_on.nil? ? nil: t('.time_close', closed_on: u_time(issue.closed_on, issue))
+    if !issue.journals.nil?
+      history = issue.journals.map { |journal|
+        detail = journal.details.map {|d|
+          template =
+            case d[:property]
+            when 'attachment'
+              '.detail_file'
+            when 'attr'
+              '.detail_attr'
+            else
+              '.detail'
+            end
+          t(template,
+            property:d[:property],
+            prop_key:d[:prop_key],
+            value: d[:value])
+        }
+        t('.history',
+          created_on: u_time(journal.created_on, issue),
+          user: journal.user,
+          notes: journal.notes,
+          detail: detail.empty? ? nil: detail
+        )
+      }
+    end
+    respond_with :message, text: t('.notice',
+                                   caption: issue.to_s,
+                                   description: issue.description,
+                                   created_on: u_time(issue.created_on,issue),
+                                   assigned: issue.assigned_to,
+                                   status: issue.status,
+                                   closed_on: closed_on,
+                                   history: history.join("\n"))
     save_context :add_description_context
+  end
+
+  def arc_issues!(*args)
+    callback_action = 'set_issue_context'
+    list = Issue.
+            where(author_id: session[:user_id]).
+            where.not(closed_on: nil).
+            map {|issue| [{
+              text: t('.caption', caption:issue.to_s) ,
+              callback_data: "{ \"action\": \"#{callback_action}\", \"issue_id\": \"#{issue.id}\" }"
+            }]}
+    respond_with :message, text: t('.prompt'), reply_markup: { inline_keyboard: list }
   end
 
   def my_issues!(*args)

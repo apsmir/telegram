@@ -32,7 +32,7 @@ module Poller
         break
       rescue Exception => e
         logger.error "Telegram bot error #{e}"
-        sleep 1.minute
+        sleep 5.second
       end
     end
   end

@@ -11,15 +11,9 @@ en:
       get_issue_description: 'Введите текст заявки:'
     help:
       content: |
-        Available cmds:
-        /start - Greeting.
-        /memo %text% - Saves text to session.
-        /remind_me - Replies with text from session.
-        /keyboard - Simple keyboard.
-        /inline_keyboard - Inline keyboard example.
-        Bot supports inline queries. Enable it in @BotFather.
-        /last_chosen_inline_result - Your last chosen inline result \
-        (Enable feedback with /setinlinefeedback).
+        1. Пройдите регистрацию
+        2. Введите текст и создайте заявку
+        3. Используйте меню для работы с заявками
     inline_keyboard:
       alert: Answer with alert
       no_alert: Without alert
@@ -84,20 +78,38 @@ en:
     my_issues:
       prompt: Выберите задачу для просмотра
       caption: '%{caption}'
+    arc_issues:
+      prompt: Выберите задачу для просмотра
+      caption: '%{caption}'
     set_issue_context:
+      time_close: 'Закрыта %{closed_on}'
+      history: '%{created_on} %{user}: %{notes} %{detail}'
+      detail: '%{property} %{prop_key}:%{value}'
+      detail_file: 'файл %{value}'
+      detail_attr: 'изменил поле %{prop_key}=%{value}'
       notice: |
         %{caption} 
         %{description}
+        Создана: %{created_on}
+        Назначена: %{assigned}
+        Статус: %{status}
+        %{closed_on}
+        
+        Журнал сообщений:
+        %{history}
     menu:
       - item:
           command: help
           description: Помощь
       - item:
+          command: start
+          description: Перерегистрация
+      - item:
+          command: arc_issues
+          description: Закрытые заявки
+      - item:
           command: new_issue
           description: Новая заявка
-      - item:
-          command: projects
-          description: Список проектов
       - item:
           command: my_issues
           description: Мои заявки
