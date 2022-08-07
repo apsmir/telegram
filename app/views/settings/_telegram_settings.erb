@@ -25,5 +25,17 @@
              name="settings[bot_username]" >
     </td>
   </tr>
+  <tr>
+    <th style="text-align: right">Help message</th>
+    <td>
+      <%= text_area_tag("settings[help]", settings[:help], rows: 10) %>
+    </td>
+  </tr>
+  <tr>
+    <th style="text-align: right">Welcome message</th>
+    <td>
+      <%= text_area_tag("settings[welcome]", settings[:welcome], rows: 10) %>
+    </td>
+  </tr>
   </tbody>
 </table>

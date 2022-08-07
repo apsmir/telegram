@@ -11,9 +11,7 @@ en:
       get_issue_description: 'Введите текст заявки:'
     help:
       content: |
-        1. Пройдите регистрацию
-        2. Введите текст и создайте заявку
-        3. Используйте меню для работы с заявками
+        Для настройки раздела "Помощь" используйте настройки плагина в поле "Help message"
     inline_keyboard:
       alert: Answer with alert
       no_alert: Without alert
@@ -89,11 +87,11 @@ en:
       detail_attr: 'изменил поле %{prop_key}=%{value}'
       notice: |
         %{caption} 
-        %{description}
         Создана: %{created_on}
         Назначена: %{assigned}
         Статус: %{status}
         %{closed_on}
+        %{description}
         
         Журнал сообщений:
         %{history}

@@ -53,15 +53,18 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
       session[:user_id] = nil
       mail = session[:email]
       u = User.find_by_mail(mail)
+      msg = Setting.plugin_telegram['welcome']
       if u
         respond_with :message, text: t('.user_found', login:u.login, firstname: u.firstname, lastname: u.lastname)
+        respond_with :message, text: msg
       else
         u = MailHandler.new_user_from_attributes(mail, session[:fio])
         s1 = u.lastname
         u.lastname = u.firstname
         u.firstname = s1
         if u.save
-          respond_with :message, text: t('.success')
+          msg = t('.success') if msg.blank?
+          respond_with :message, text: msg
         else
           raise Exception.new(u.errors.full_messages)
         end
@@ -270,19 +273,6 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
     else
       answer_callback_query 'description added'
     end
-    #if obj.action == 'get_issue_description'
-    #  get_issue_description(obj)
-    #else
-    #  answer_callback_query 'description added'
-    #end
-    #if session[:context] == 'new_issue!'
-    #  new_issue!([data])
-    #end
-    #if data == 'alert'
-    #  answer_callback_query t('.alert'), show_alert: true
-    #else
-    #  answer_callback_query t('.no_alert')
-    #end
   end
 
   def projects!(*)
@@ -296,7 +286,9 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
   end
 
   def help!(*)
-    respond_with :message, text: t('.content')
+    msg = Setting.plugin_telegram['help']
+    msg = t('.content') if msg.blank?
+    respond_with :message, text: msg
   end
 
   def memo!(*args)
