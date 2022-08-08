@@ -58,6 +58,18 @@ module RedmineHooks
       }
     end
 
+    def send_document(chat_id, file, caption)
+      Thread.new {
+        begin
+          client = Telegram::Bot::Client.new(Setting.plugin_telegram['bot_token'])
+          client.async(false)
+          client.send_document(chat_id: "#{chat_id}", document: File.open(file), caption: caption)
+        rescue Exception => e
+          Rails.logger.error "Telegram bot error #{e}"
+        end
+      }
+    end
+
     def controller_issues_edit_after_save (context = { })
       return unless Setting.plugin_telegram['bot_enabled'].to_i > 0
 
@@ -78,7 +90,11 @@ module RedmineHooks
             journal.details.each do |detail|
               if detail.property == 'attachment'
                 att = Attachment.find_by_id(detail.prop_key)
-                send_photo(chat_id, att.diskfile, att.description) if att.is_image?
+                if att.is_image?
+                 send_photo(chat_id, att.diskfile, att.description)
+                else
+                  send_document(chat_id, att.diskfile, att.description)
+                end
               end
             end
             send_message(chat_id, "#{msg_time} #{l(:tg_issue_closed)}: #{issue.id}") unless issue.closed_on.nil?

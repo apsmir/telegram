@@ -55,7 +55,7 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
       u = User.find_by_mail(mail)
       msg = Setting.plugin_telegram['welcome']
       if u
-        respond_with :message, text: t('.user_found', login:u.login, firstname: u.firstname, lastname: u.lastname)
+        #respond_with :message, text: t('.user_found', login:u.login, firstname: u.firstname, lastname: u.lastname)
         respond_with :message, text: msg
       else
         u = MailHandler.new_user_from_attributes(mail, session[:fio])
@@ -137,10 +137,18 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
     end
   end
 
-  def add_photo_to_issue(issue, user)
+  def add_file_to_issue(issue, user, type)
     begin
-      file = bot.get_file({file_id: payload['photo'].last['file_id']})
-      file_name = file['result']['file_path']
+      item = payload[type]
+      return if item.nil?
+      if item.kind_of?(Array)
+        file_id = item.last['file_id']
+      else
+        file_id = item['file_id']
+        file_name = payload[type]['file_name']
+      end
+      file = bot.get_file({file_id: file_id})
+      file_name ||= file['result']['file_path']
       uri = "https://api.telegram.org/file/bot#{bot.token}/#{file_name}"
       response = bot.client.get(uri)
       att = Attachment.create(:container => issue,
@@ -148,7 +156,6 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
                               :filename => file_name,
                               :author => user)
       issue.attachments << att
-      return att
     rescue Exception => e
       respond_with :message, text: t('.error', e: e)
     end
@@ -159,13 +166,17 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
       issue = Issue.find(session[:active_issue])
       user = User.find_by_id(session['user_id'])
       if issue.closed_on.nil?
-        attachment = add_photo_to_issue(issue, user) unless payload['photo'].nil?
         if issue.journals.empty?
           issue.description+= "\n" +args.join(' ')
         else
           issue.init_journal(user, args.join(' '))
-          issue.current_journal.journalize_attachment(attachment, :added) unless attachment.nil?
         end
+        add_file_to_issue(issue, user, 'photo')
+        add_file_to_issue(issue, user, 'document')
+        add_file_to_issue(issue, user, 'audio')
+        add_file_to_issue(issue, user, 'video')
+        add_file_to_issue(issue, user, 'voice')
+        add_file_to_issue(issue, user, 'video_note')
         save_context :add_description_context
         if issue.save
           respond_with :message, text: t('.success', id: issue.id)

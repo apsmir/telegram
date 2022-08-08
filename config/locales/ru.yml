@@ -38,7 +38,7 @@ en:
     remind_me:
       nothing: Nothing to remind
     start:
-      content: 'Пожалуйста представтесь'
+      content: 'Пожалуйста представьтесь'
       fio: 'ФИО:'
       email: 'адрес электронной почты:'
       city: 'город:'
