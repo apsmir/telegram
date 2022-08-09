@@ -54,6 +54,7 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
       mail = session[:email]
       u = User.find_by_mail(mail)
       msg = Setting.plugin_telegram['welcome']
+      msg = t('.success') if msg.blank?
       if u
         #respond_with :message, text: t('.user_found', login:u.login, firstname: u.firstname, lastname: u.lastname)
         respond_with :message, text: msg
@@ -63,7 +64,6 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
         u.lastname = u.firstname
         u.firstname = s1
         if u.save
-          msg = t('.success') if msg.blank?
           respond_with :message, text: msg
         else
           raise Exception.new(u.errors.full_messages)
