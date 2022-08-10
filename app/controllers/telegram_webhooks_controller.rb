@@ -1,4 +1,7 @@
 class TelegramWebhooksController < Telegram::Bot::UpdatesController
+
+  before_action :check_registration, except: [:start!]
+
   include Telegram::Bot::UpdatesController::MessageContext
   include Telegram::Bot::UpdatesController::Session
   include Redmine::I18n
@@ -18,6 +21,12 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
     ll(Setting.default_language, key, options)
   end
 
+  def check_registration
+    return true if !session[:user_id].blank?
+    respond_with :message, text: t('tg_user_not_registered')
+    throw(:abort)
+  end
+
   def start!(*args)
     field = session[:field]
     if field.blank?
@@ -35,14 +44,8 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
         session.delete(:field)
         if register_user
           set_chat_menu
+          new_issue!(nil)
         end
-        #, reply_markup: {
-        #  keyboard: [t('.buttons')],
-        #  resize_keyboard: true,
-        #  one_time_keyboard: true,
-        #  input_field_placeholder: 'test placeholder',
-        #  selective: true,
-        #}
       else
         session.delete(:field)
       end
@@ -52,6 +55,9 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
   def register_user
     begin
       session[:user_id] = nil
+      session[:active_project_id] = nil
+      session[:active_issue_id] = nil
+      session[:field] = nil
       mail = session[:email]
       u = User.find_by_mail(mail)
       msg = Setting.plugin_telegram['welcome']
@@ -74,7 +80,6 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
       session[:chat_id] = chat_id
       return true
     rescue Exception => e
-      session[:field] = nil
       respond_with :message, text: t('.register_user_error', e: e)
       return false
     end
@@ -89,11 +94,15 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
   end
 
   def set_chat_menu
-    cmd = I18n.t('telegram_webhooks.menu').map{|s|
+    cmd = t('telegram_webhooks.menu').map{|s|
       {command: s[:item][:command], description: s[:item][:description]}
     }
     bot.set_my_commands({commands: cmd, scope: { type: 'chat', chat_id: chat_id }})
     bot.set_chat_menu_button( {chat_id: chat_id, menu_button: { type: 'commands' }})
+  end
+
+  def list_projects_context(*args)
+    list_projects ('get_issue_description')
   end
 
   def new_issue!(*args)
@@ -127,7 +136,7 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
                             text: args.join(' '))
       session[:new_issue_description] = nil
       if issue.save
-        session[:active_issue] = issue.id
+        session[:active_issue_id] = issue.id
         respond_with :message, text: t('.success', id: issue.id)
         save_context :add_description_context
       else
@@ -164,7 +173,7 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
 
   def add_description_context(*args)
     begin
-      issue = Issue.find(session[:active_issue])
+      issue = Issue.find(session[:active_issue_id])
       user = User.find_by_id(session['user_id'])
       if issue.closed_on.nil?
         if issue.journals.empty?
@@ -186,7 +195,7 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
         end
       else
         # create new issue
-        session[:active_issue] = nil
+        session[:active_issue_id] = nil
         session[:new_issue_description] = args
         save_context :new_issue
         new_issue!([])
@@ -201,7 +210,7 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
   end
 
   def set_issue_context(action_obj)
-    session[:active_issue] = action_obj.issue_id
+    session[:active_issue_id] = action_obj.issue_id
     save_context :set_issue_context
     issue = Issue.find(action_obj.issue_id)
     closed_on = issue.closed_on.nil? ? nil: t('.time_close', closed_on: u_time(issue.closed_on, issue))
@@ -265,12 +274,11 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
   end
 
   def list_projects (callback_action = action_name)
+    save_context :list_projects_context
     list = Project.find_each.map {|project|
-      {text: project.name, callback_data: "{ \"action\": \"#{callback_action}\", \"project_id\": \"#{project.id}\" }"}
+      [{text: project.name, callback_data: "{ \"action\": \"#{callback_action}\", \"project_id\": \"#{project.id}\" }"}]
     }
-    respond_with :message, text: t('.prompt'), reply_markup: {
-      inline_keyboard: [list],
-    }
+    respond_with :message, text: t('.prompt'), reply_markup: { inline_keyboard: list }
   end
 
   def callback_query(data)

@@ -32,14 +32,16 @@
 en:
   tg_issue_response: "answered "
   tg_issue_closed: "The task is closed. Task number"
+  tg_user_not_registered: Registration failed. To register, run the command /start
   telegram_webhooks:
     action_missing:
       command: Unknown command %{command}
-    callback_query:
-      get_issue_description: 'Enter the text of the issue:'
     help:
       content: |
         To customize the "Help" section, use the plugin settings in the "Help message" field
+    list_projects_context:
+      prompt: To create an issue, select a project from the list
+      get_issue_description: 'Enter the text of the issue:'
     message:
       content: |
         Issue not selected

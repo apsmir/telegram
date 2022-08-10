@@ -1,14 +1,16 @@
 ru:
   tg_issue_response: "ответил "
   tg_issue_closed: "Задача закрыта. Номер задачи"
+  tg_user_not_registered: Регистрация не пройдена. Для регистрации выполните команду /start
   telegram_webhooks:
     action_missing:
       command: 'Неизвестная команда %{command}'
-    callback_query:
-      get_issue_description: 'Введите текст заявки:'
     help:
       content: |
         Для настройки раздела "Помощь" используйте настройки плагина в поле "Help message"
+    list_projects_context:
+      prompt: Для создания заявки выберите раздел из списка
+      get_issue_description: 'Введите текст заявки:'
     message:
       content: |
         Не выбрана заявка для работы
