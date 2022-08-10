@@ -30,47 +30,93 @@
 # available at https://guides.rubyonrails.org/i18n.html.
 
 en:
+  tg_issue_response: "answered "
+  tg_issue_closed: "The task is closed. Task number"
   telegram_webhooks:
     action_missing:
-      command: Can not perform %{command}
+      command: Unknown command %{command}
     callback_query:
-      alert: This is ALERT-T-T!!!
-      no_alert: Simple answer
+      get_issue_description: 'Enter the text of the issue:'
     help:
       content: |
-        Available cmds:
-        /start - Greeting.
-        /memo %text% - Saves text to session.
-        /remind_me - Replies with text from session.
-        /keyboard - Simple keyboard.
-        /inline_keyboard - Inline keyboard example.
-        Bot supports inline queries. Enable it in @BotFather.
-        /last_chosen_inline_result - Your last chosen inline result \
-        (Enable feedback with /setinlinefeedback).
-    inline_keyboard:
-      alert: Answer with alert
-      no_alert: Without alert
-      prompt: 'Check my inline keyboard:'
-      repo: Open gem repo
-    inline_query:
-      content: Content
-      description: Description
-    keyboard:
-      buttons:
-        - Lorem
-        - Ipsum
-        - /cancel
-      prompt: 'Select something with keyboard:'
-      selected: "You've selected: %{value}"
-    last_chosen_inline_result:
-      prompt: Mention me to initiate inline query
-      selected: "You've chosen result #%{result_id}"
-    memo:
-      notice: Remembered!
-      prompt: What should I remember?
+        To customize the "Help" section, use the plugin settings in the "Help message" field
     message:
-      content: 'You wrote: %{text}'
-    remind_me:
-      nothing: Nothing to remind
+      content: |
+        Issue not selected
+        select issue /my_issues
+        and resend %{text}
     start:
-      content: Hi there!
+      content: 'Please, introduce yourself'
+      fio: 'Full name:'
+      email: 'E-mail address:'
+      city: 'city:'
+      register_user_error: |
+        User registration error%{e}
+        Try to register again
+        /start
+      user_found: 'User already registered: login=%{login}, First name=%{firstname}, Last name=%{lastname}'
+      success: |
+        Registration completed successfully! To customize this message, use the plugin settings in the "Welcome message" field
+      buttons:
+        - /list List of issues
+        - /new New issue
+    new_issue:
+      prompt: Select the project in which the new ticket will be created
+      description: Issue text
+    projects:
+      prompt: select a project
+      alert: alert
+    create_issue:
+      success: 'The task has been successfully created. Task number %{id}'
+      error: 'Task creation error %{e}'
+      description: |
+        =====================
+        Application from Telegram
+        
+          Full name: %{fio}
+         email: %{email}
+         phone: %{phone}
+        
+        =====================
+        %{text}
+    add_description_context:
+      success: 'Posted to task %{id}'
+      error: 'Error adding task description %{e}'
+    my_issues:
+      prompt: Select a task to view
+      caption: '%{caption}'
+    arc_issues:
+      prompt: Select a task to view
+      caption: '%{caption}'
+    set_issue_context:
+      time_close: 'Closed %{closed_on}'
+      history: '%{created_on} %{user}: %{notes} %{detail}'
+      detail: '%{property} %{prop_key}:%{value}'
+      detail_file: 'file %{value}'
+      detail_attr: 'changed field%{prop_key}=%{value}'
+      notice: |
+        %{caption} 
+        Created: %{created_on}
+        Assigned: %{assigned}
+        Status: %{status}
+        %{closed_on}
+        %{description}
+        
+        Message log:
+        %{history}
+    menu:
+      - item:
+          command: help
+          description: Help
+      - item:
+          command: start
+          description: Re-registration
+      - item:
+          command: arc_issues
+          description: Closed issues
+      - item:
+          command: new_issue
+          description: New task
+      - item:
+          command: my_issues
+          description: My task

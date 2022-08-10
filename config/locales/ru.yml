@@ -1,42 +1,19 @@
-
-en:
+ru:
   tg_issue_response: "ответил "
   tg_issue_closed: "Задача закрыта. Номер задачи"
   telegram_webhooks:
     action_missing:
-      command: Can not perform %{command}
+      command: 'Неизвестная команда %{command}'
     callback_query:
-      alert: This is ALERT-T-T!!!
-      no_alert: Simple answer
       get_issue_description: 'Введите текст заявки:'
     help:
       content: |
         Для настройки раздела "Помощь" используйте настройки плагина в поле "Help message"
-    inline_keyboard:
-      alert: Answer with alert
-      no_alert: Without alert
-      prompt: 'Check my inline keyboard:'
-      repo: Open gem repo
-    inline_query:
-      content: Content
-      description: Description
-    keyboard:
-      buttons:
-        - Lorem
-        - Ipsum
-        - /cancel
-      prompt: 'Select something with keyboard:'
-      selected: "You've selected: %{value}"
-    last_chosen_inline_result:
-      prompt: Mention me to initiate inline query
-      selected: "You've chosen result #%{result_id}"
-    memo:
-      notice: Remembered!
-      prompt: What should I remember?
     message:
-      content: 'You wrote: %{text}'
-    remind_me:
-      nothing: Nothing to remind
+      content: |
+        Не выбрана заявка для работы
+        выберите заявку /my_issues
+        и отправьте повторно %{text}
     start:
       content: 'Пожалуйста представьтесь'
       fio: 'ФИО:'
@@ -49,7 +26,7 @@ en:
       user_found: 'Пользователь уже зарегистрирован: login=%{login}, Имя=%{firstname}, Фамилия=%{lastname}'
       success: |
         Регистрация пройдена успешно! Для настройки этого сообщения используйте настройки плагина в поле "Welcome message"
-      buttons:
+        buttons:
         - /list Список заявок
         - /new Новая заявка
     new_issue:

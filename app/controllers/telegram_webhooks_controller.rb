@@ -1,6 +1,7 @@
 class TelegramWebhooksController < Telegram::Bot::UpdatesController
   include Telegram::Bot::UpdatesController::MessageContext
   include Telegram::Bot::UpdatesController::Session
+  include Redmine::I18n
 
   def t(key, **options)
     if key.to_s.start_with?('.')
@@ -14,7 +15,7 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
         key = "#{path}.#{session[:context]}#{key}"
       end
     end
-    I18n.translate(key, **options)
+    ll(Setting.default_language, key, options)
   end
 
   def start!(*args)
@@ -300,22 +301,7 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
     msg = Setting.plugin_telegram['help']
     msg = t('.content') if msg.blank?
     respond_with :message, text: msg
-  end
-
-  def memo!(*args)
-    if args.any?
-      session[:memo] = args.join(' ')
-      respond_with :message, text: t('.notice')
-    else
-      respond_with :message, text: t('.prompt')
-      save_context :memo!
-    end
-  end
-
-  def remind_me!(*)
-    to_remind = session.delete(:memo)
-    reply = to_remind || t('.nothing')
-    respond_with :message, text: reply
+    puts "Setting.default_language=#{Setting.default_language}"
   end
 
   def keyboard!(value = nil, *)
@@ -387,5 +373,6 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
         text: t('telegram_webhooks.action_missing.command', command: action_options[:command])
     end
   end
+
 end
 
