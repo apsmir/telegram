@@ -13,6 +13,6 @@ Poller::init()
 
 if Rails.env.development?
   t = Thread.new {
-    Poller::start()
+   Poller::start()
 }
 end

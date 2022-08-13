@@ -23,6 +23,7 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
 
   def check_registration
     return true if !session[:user_id].blank?
+    clear_chat_menu
     respond_with :message, text: t('tg_user_not_registered')
     throw(:abort)
   end

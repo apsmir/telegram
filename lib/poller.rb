@@ -26,6 +26,8 @@ module Poller
             logger.info 'Telegram bot disabled'
           end
           bot_run = false
+          sleep 1.minute
+          init()
         end
       rescue SystemExit, SignalException
         logger.error "Telegram poller stopped"
