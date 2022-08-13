@@ -85,6 +85,14 @@ module RedmineHooks
       }]]
     end
 
+    def convert_time_to_user_timezone(user, time)
+      if user.time_zone
+        time.in_time_zone(user.time_zone)
+      else
+        time.utc? ? time.localtime : time
+      end
+    end
+
     def controller_issues_edit_after_save (context = { })
       return unless Setting.plugin_telegram['bot_enabled'].to_i > 0
 
@@ -94,7 +102,7 @@ module RedmineHooks
       if !issue.notes.empty? || !issue.closed_on.nil? || journal
         d = journal.created_on
         d = Time.now.utc if d.nil?
-        msg_time = issue.author.convert_time_to_user_timezone(d).strftime('%H:%M')
+        msg_time = convert_time_to_user_timezone(issue.author, d).strftime('%H:%M')
         user = User.find_by_id(journal.user_id)
         store = Telegram::Bot::UpdatesController.session_store
         cache_path = store.cache_path

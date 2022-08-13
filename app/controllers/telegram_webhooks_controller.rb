@@ -205,7 +205,15 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
   end
 
   def u_time(utc_time, issue)
-    issue.author.convert_time_to_user_timezone(utc_time).strftime('%d-%m-%Y %H:%M')
+    convert_time_to_user_timezone(issue.author, utc_time).strftime('%d-%m-%Y %H:%M')
+  end
+
+  def convert_time_to_user_timezone(user, time)
+    if user.time_zone
+      time.in_time_zone(user.time_zone)
+    else
+      time.utc? ? time.localtime : time
+    end
   end
 
   def set_issue_context(action_obj)
