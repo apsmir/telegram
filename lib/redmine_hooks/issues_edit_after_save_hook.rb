@@ -20,18 +20,17 @@ module RedmineHooks
       URI.decode_www_form_component(fname, Encoding::UTF_8)
     end
 
-    def send_message(chat_id, text)
+    def send_message(chat_id, text, list=[])
       Thread.new {
         begin
-          client = Telegram::Bot::Client.new(Setting.plugin_telegram['bot_token'])
+          client = Telegram::Bot::Client.new(token)
           client.async(false)
-          client.send_message(chat_id: "#{chat_id}", text: text)
+          client.send_message(chat_id: "#{chat_id}", text: text, reply_markup: { inline_keyboard: list })
         rescue Exception => e
           Rails.logger.error "Telegram bot error #{e}"
         end
       }
     end
-
 
     def get_files(context)
       files = []
@@ -49,7 +48,7 @@ module RedmineHooks
     def send_photo(chat_id, file, caption)
       Thread.new {
         begin
-          client = Telegram::Bot::Client.new(Setting.plugin_telegram['bot_token'])
+          client = Telegram::Bot::Client.new(token)
           client.async(false)
           client.send_photo(chat_id: "#{chat_id}", photo: File.open(file), caption: caption)
         rescue Exception => e
@@ -61,13 +60,29 @@ module RedmineHooks
     def send_document(chat_id, file, caption)
       Thread.new {
         begin
-          client = Telegram::Bot::Client.new(Setting.plugin_telegram['bot_token'])
+          client = Telegram::Bot::Client.new(token)
           client.async(false)
           client.send_document(chat_id: "#{chat_id}", document: File.open(file), caption: caption)
         rescue Exception => e
           Rails.logger.error "Telegram bot error #{e}"
         end
       }
+    end
+
+    def token
+      return Setting.plugin_telegram['bot_token']
+    end
+
+    def lang
+      return Setting.default_language
+    end
+
+    def get_issue_button(issue)
+      callback_action = 'set_issue_context'
+      return [[{
+            text: ll(lang, :tg_select_issue, caption:issue.to_s) ,
+            callback_data: "{ \"action\": \"#{callback_action}\", \"issue_id\": \"#{issue.id}\" }"
+      }]]
     end
 
     def controller_issues_edit_after_save (context = { })
@@ -77,7 +92,9 @@ module RedmineHooks
       journal = context[:journal]
 
       if !issue.notes.empty? || !issue.closed_on.nil? || journal
-        msg_time = issue.author.convert_time_to_user_timezone(journal.created_on).strftime('%H:%M')
+        d = journal.created_on
+        d = Time.now.utc if d.nil?
+        msg_time = issue.author.convert_time_to_user_timezone(d).strftime('%H:%M')
         user = User.find_by_id(journal.user_id)
         store = Telegram::Bot::UpdatesController.session_store
         cache_path = store.cache_path
@@ -85,7 +102,16 @@ module RedmineHooks
           session = store.fetch(file_path_key(cache_path, fname))
           chat_id = session['chat_id']
           if chat_id && (session['user_id'] == issue.author_id)
-            send_message(chat_id, "#{msg_time} #{user.firstname} #{l(:tg_issue_response)}: #{issue.notes}") unless issue.notes.empty?
+            if issue.id.to_s != session['active_issue_id']
+              issue_num = l(:tg_in_issue_num, id:issue.id)
+              button = get_issue_button(issue)
+            else
+              issue_num = ''
+              button = []
+            end
+            send_message(chat_id,
+                         "#{msg_time} #{issue_num} #{user.firstname} #{l(:tg_issue_response)}: #{issue.notes}",
+                         button) unless issue.notes.blank?
             sleep 0.1
             journal.details.each do |detail|
               if detail.property == 'attachment'

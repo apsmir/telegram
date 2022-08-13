@@ -33,6 +33,10 @@ en:
   tg_issue_response: "answered "
   tg_issue_closed: "The task is closed. Task number"
   tg_user_not_registered: Registration failed. To register, run the command /start
+  tg_in_issue_num: Issue №%{id}
+  tg_select_issue: SWITCH TO %{caption}
+  tg_select_issue_text: 'to switch №%{id} press:'
+
   telegram_webhooks:
     action_missing:
       command: Unknown command %{command}
@@ -69,6 +73,7 @@ en:
       prompt: select a project
       alert: alert
     create_issue:
+      get_issue_description: 'Input issue description:'
       success: 'The task has been successfully created. Task number %{id}'
       error: 'Task creation error %{e}'
       description: |

@@ -2,6 +2,9 @@ ru:
   tg_issue_response: "ответил "
   tg_issue_closed: "Задача закрыта. Номер задачи"
   tg_user_not_registered: Регистрация не пройдена. Для регистрации выполните команду /start
+  tg_in_issue_num: В задаче №%{id}
+  tg_select_issue: ПЕРЕКЛЮЧИТЬСЯ НА %{caption}
+  tg_select_issue_text: 'Для переключения на задачу №%{id} нажмите:'
   telegram_webhooks:
     action_missing:
       command: 'Неизвестная команда %{command}'
@@ -38,6 +41,7 @@ ru:
       prompt: выберите проект
       alert: Проект №1
     create_issue:
+      get_issue_description: 'Введите текст заявки:'
       success: 'Задача успешно создана. Номер задачи %{id}'
       error: 'Ошибка создания задачи %{e}'
       description: |

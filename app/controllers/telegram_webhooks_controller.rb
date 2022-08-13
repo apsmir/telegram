@@ -110,13 +110,12 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
   end
 
   def get_issue_description (action_obj)
+    bot_context :create_issue
     session[:active_project_id] = action_obj.project_id
     new_issue_description = session[:new_issue_description]
     if new_issue_description.blank?
       respond_with :message, text: t('.get_issue_description')
-      save_context :create_issue
     else
-      save_context :create_issue
       create_issue(new_issue_description)
     end
   end
@@ -138,7 +137,7 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
       if issue.save
         session[:active_issue_id] = issue.id
         respond_with :message, text: t('.success', id: issue.id)
-        save_context :add_description_context
+        bot_context :add_description_context
       else
         raise Exception.new(issue.errors.full_messages)
       end
@@ -187,7 +186,7 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
         add_file_to_issue(issue, user, 'video')
         add_file_to_issue(issue, user, 'voice')
         add_file_to_issue(issue, user, 'video_note')
-        save_context :add_description_context
+        bot_context :add_description_context
         if issue.save
           respond_with :message, text: t('.success', id: issue.id)
         else
@@ -197,7 +196,7 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
         # create new issue
         session[:active_issue_id] = nil
         session[:new_issue_description] = args
-        save_context :new_issue
+        bot_context :new_issue
         new_issue!([])
       end
     rescue Exception => e
@@ -211,7 +210,7 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
 
   def set_issue_context(action_obj)
     session[:active_issue_id] = action_obj.issue_id
-    save_context :set_issue_context
+    bot_context :set_issue_context
     issue = Issue.find(action_obj.issue_id)
     closed_on = issue.closed_on.nil? ? nil: t('.time_close', closed_on: u_time(issue.closed_on, issue))
     if !issue.journals.nil?
@@ -247,7 +246,7 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
                                    status: issue.status,
                                    closed_on: closed_on,
                                    history: history.join("\n"))
-    save_context :add_description_context
+    bot_context :add_description_context
   end
 
   def arc_issues!(*args)
@@ -260,6 +259,7 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
               callback_data: "{ \"action\": \"#{callback_action}\", \"issue_id\": \"#{issue.id}\" }"
             }]}
     respond_with :message, text: t('.prompt'), reply_markup: { inline_keyboard: list }
+    bot_context session[:bot_context]
   end
 
   def my_issues!(*args)
@@ -271,10 +271,11 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
          }]
       }
       respond_with :message, text: t('.prompt'), reply_markup: { inline_keyboard: list }
+    bot_context session[:bot_context]
   end
 
   def list_projects (callback_action = action_name)
-    save_context :list_projects_context
+    bot_context :list_projects_context
     list = Project.find_each.map {|project|
       [{text: project.name, callback_data: "{ \"action\": \"#{callback_action}\", \"project_id\": \"#{project.id}\" }"}]
     }
@@ -302,7 +303,7 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
   def get_filed( field)
     respond_with :message, text: t('.'+field)
     session[:field] = field
-    save_context action_name
+    bot_context action_name
   end
 
   def help!(*)
@@ -310,13 +311,14 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
     msg = t('.content') if msg.blank?
     respond_with :message, text: msg
     puts "Setting.default_language=#{Setting.default_language}"
+    bot_context session[:bot_context]
   end
 
   def keyboard!(value = nil, *)
     if value
       respond_with :message, text: t('.selected', value: value)
     else
-      save_context :keyboard!
+      bot_context :keyboard!
       respond_with :message, text: t('.prompt'), reply_markup: {
         keyboard: [t('.buttons')],
         resize_keyboard: true,
@@ -356,21 +358,6 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
     answer_inline_query results
   end
 
-  # As there is no chat id in such requests, we can not respond instantly.
-  # So we just save the result_id, and it's available then with `/last_chosen_inline_result`.
-  def chosen_inline_result(result_id, _query)
-    session[:last_chosen_inline_result] = result_id
-  end
-
-  def last_chosen_inline_result!(*)
-    result_id = session[:last_chosen_inline_result]
-    if result_id
-      respond_with :message, text: t('.selected', result_id: result_id)
-    else
-      respond_with :message, text: t('.prompt')
-    end
-  end
-
   def message(message)
     respond_with :message, text: t('.content', text: message['text'])
   end
@@ -379,7 +366,13 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
     if action_type == :command
       respond_with :message,
         text: t('telegram_webhooks.action_missing.command', command: action_options[:command])
+      bot_context session[:bot_context]
     end
+  end
+
+  def bot_context(context)
+    save_context context
+    session[:bot_context] = context
   end
 
 end
