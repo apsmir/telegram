@@ -129,10 +129,11 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
       issue.tracker ||= issue.project.trackers.first
       issue.subject = args.take(5).join(' ')
       issue.author ||= User.find(session[:user_id])
+      issue.notify = true
       issue.description = t('.description',
                             fio: session[:fio],
                             email: session[:email],
-                            phone: session[:phone],
+                            city: session[:city],
                             text: args.join(' '))
       session[:new_issue_description] = nil
       if issue.save

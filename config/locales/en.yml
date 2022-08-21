@@ -82,7 +82,7 @@ en:
         
           Full name: %{fio}
          email: %{email}
-         phone: %{phone}
+         city: %{city}
         
         =====================
         %{text}
