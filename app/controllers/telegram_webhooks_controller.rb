@@ -262,7 +262,7 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
   def arc_issues!(*args)
     callback_action = 'set_issue_context'
     list = Issue.
-            where(author_id: session[:user_id]).
+            where(author_id: session[:user_id], project_id: project_ids).
             where.not(closed_on: nil).
             map {|issue| [{
               text: t('.caption', caption:issue.to_s) ,
@@ -272,9 +272,16 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
     bot_context session[:bot_context]
   end
 
+  def project_ids
+    return Setting.plugin_telegram['notified_project_ids'].to_a
+  end
+
   def my_issues!(*args)
     callback_action = 'set_issue_context'
-    list = Issue.where(author_id: session[:user_id], closed_on: nil).map {|issue|
+    list = Issue.
+        where(author_id: session[:user_id], closed_on: nil).
+        where(project_id: project_ids).
+        map {|issue|
         [{
           text: t('.caption', caption:issue.to_s) ,
           callback_data: "{ \"action\": \"#{callback_action}\", \"issue_id\": \"#{issue.id}\" }"
@@ -286,7 +293,9 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
 
   def list_projects (callback_action = action_name)
     bot_context :list_projects_context
-    list = Project.find_each.map {|project|
+    list = Project.
+      where(id: project_ids).
+      map {|project|
       [{text: project.name, callback_data: "{ \"action\": \"#{callback_action}\", \"project_id\": \"#{project.id}\" }"}]
     }
     respond_with :message, text: t('.prompt'), reply_markup: { inline_keyboard: list }

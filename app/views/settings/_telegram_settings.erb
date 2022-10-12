@@ -37,5 +37,25 @@
       <%= text_area_tag("settings[welcome]", settings[:welcome], rows: 10) %>
     </td>
   </tr>
+  <% project_ids = settings['notified_project_ids'].to_a %>
+  <tr>
+    <th style="text-align: right">Use for projects</th>
+    <td>
+    <%= content_tag 'fieldset', :id => 'notified-projects' do %>
+      <%= render_project_nested_lists(Project.all) do |project|
+        content_tag('label',
+                    check_box_tag(
+                      'settings[notified_project_ids][]',
+                      project.id,
+                      project_ids.include?(project.id.to_s),
+                      :id => nil
+                    ) + ' ' + h(project.name),
+                    :style => 'all: revert;'
+        )
+      end %>
+      <%= hidden_field_tag 'settings[notified_project_ids][]', '' %>
+    <% end %>
+    </td>
+  </tr>
   </tbody>
 </table>

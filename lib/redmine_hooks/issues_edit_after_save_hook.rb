@@ -93,11 +93,21 @@ module RedmineHooks
       end
     end
 
+    def project_ids
+      return Setting.plugin_telegram['notified_project_ids'].to_a
+    end
+
+    def project_included(project)
+      return project_ids.include?(project.id.to_s)
+    end
+
     def controller_issues_edit_after_save (context = { })
       return unless Setting.plugin_telegram['bot_enabled'].to_i > 0
 
       issue = context[:issue]
       journal = context[:journal]
+
+      return unless project_included(issue.project)
 
       if !issue.notes.empty? || !issue.closed_on.nil? || journal
         d = journal.created_on
