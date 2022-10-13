@@ -160,7 +160,7 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
       end
       file = bot.get_file({file_id: file_id})
       file_name ||= file['result']['file_path']
-      uri = "https://api.telegram.org/file/bot#{bot.token}/#{file_name}"
+      uri = "https://api.telegram.org/file/bot#{bot.token}/#{file['result']['file_path']}"
       response = bot.client.get(uri)
       att = Attachment.create(:container => issue,
                               :file => response.body,
