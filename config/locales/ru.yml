@@ -5,6 +5,9 @@ ru:
   tg_in_issue_num: В задаче №%{id}
   tg_select_issue: ПЕРЕКЛЮЧИТЬСЯ НА %{caption}
   tg_select_issue_text: 'Для переключения на задачу №%{id} нажмите:'
+  tg_user_activated: 'Пользователь активирован'
+
+
   telegram_webhooks:
     action_missing:
       command: 'Неизвестная команда %{command}'
@@ -19,6 +22,8 @@ ru:
         Не выбрана заявка для работы
         выберите заявку /my_issues
         и отправьте повторно %{text}
+    wait_activation:
+      content: 'Пользователь создан, ожидайте активацию'
     start:
       content: 'Пожалуйста представьтесь'
       fio: 'ФИО:'
@@ -63,6 +68,7 @@ ru:
     arc_issues:
       prompt: Выберите задачу для просмотра
       caption: '%{caption}'
+      no_closed_issues: 'Нет закрытых задач'
     set_issue_context:
       time_close: 'Закрыта %{closed_on}'
       history: '%{created_on} %{user}: %{notes} %{detail}'

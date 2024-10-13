@@ -1,3 +1,5 @@
+require 'ostruct'
+require 'user'
 class TelegramWebhooksController < Telegram::Bot::UpdatesController
 
   before_action :check_registration, except: [:start!]
@@ -8,7 +10,8 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
 
   def t(key, **options)
     if key.to_s.start_with?('.')
-      path = controller_path.tr('/', '.')
+      @controller_path_tr = controller_path.tr('/', '.')
+      path = @controller_path_tr
       defaults = [:"#{path}#{key}"]
       defaults << options[:default] if options[:default]
       options[:default] = defaults.flatten
@@ -43,14 +46,16 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
         get_filed('city')
       when 'city'
         session.delete(:field)
-        if register_user
-          set_chat_menu
-          new_issue!(nil)
-        end
+        register_user
       else
         session.delete(:field)
       end
     end
+  end
+
+  def wait_activation(*args)
+    bot_context :wait_activation
+    respond_with :message, text: t('.content')
   end
 
   def register_user
@@ -61,18 +66,31 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
       session[:field] = nil
       mail = session[:email]
       u = User.find_by_mail(mail)
-      msg = Setting.plugin_telegram['welcome']
-      msg = t('.success') if msg.blank?
+      welcome_msg = Setting.plugin_telegram['welcome']
+      welcome_msg = t('.success') if welcome_msg.blank?
       if u
-        #respond_with :message, text: t('.user_found', login:u.login, firstname: u.firstname, lastname: u.lastname)
-        respond_with :message, text: msg
+        if u.active?
+         respond_with :message, text: t('.user_found', login:u.login, firstname: u.firstname, lastname: u.lastname)
+         set_chat_menu
+        else
+          wait_activation
+        end
+
+        #respond_with :message, text: welcome_msg
       else
         u = MailHandler.new_user_from_attributes(mail, session[:fio])
         s1 = u.lastname
         u.lastname = u.firstname
         u.firstname = s1
+        u.status = (Setting.self_registration == '3' ? User::STATUS_REGISTERED: User::STATUS_LOCKED)
         if u.save
-          respond_with :message, text: msg
+          if u.active?
+            respond_with :message, text: welcome_msg
+            set_chat_menu
+            new_issue!(nil)
+          else
+            wait_activation
+          end
         else
           raise Exception.new(u.errors.full_messages)
         end
@@ -165,7 +183,8 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
       att = Attachment.create(:container => issue,
                               :file => response.body,
                               :filename => file_name,
-                              :author => user)
+                              :author => user,
+                              :description => payload['caption'])
       issue.attachments << att
     rescue Exception => e
       respond_with :message, text: t('.error', e: e)
@@ -268,7 +287,11 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
               text: t('.caption', caption:issue.to_s) ,
               callback_data: "{ \"action\": \"#{callback_action}\", \"issue_id\": \"#{issue.id}\" }"
             }]}
-    respond_with :message, text: t('.prompt'), reply_markup: { inline_keyboard: list }
+    if list.size == 0
+      respond_with :message, text: t('.no_closed_issues')
+    else
+      respond_with :message, text: t('.prompt'), reply_markup: { inline_keyboard: list }
+    end
     bot_context session[:bot_context]
   end
 

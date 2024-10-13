@@ -36,6 +36,7 @@ en:
   tg_in_issue_num: Issue №%{id}
   tg_select_issue: SWITCH TO %{caption}
   tg_select_issue_text: 'to switch №%{id} press:'
+  tg_user_activated: 'user activated'
 
   telegram_webhooks:
     action_missing:
@@ -51,6 +52,8 @@ en:
         Issue not selected
         select issue /my_issues
         and resend %{text}
+    wait_activation:
+      content: 'User created, wait activation'
     start:
       content: 'Please, introduce yourself'
       fio: 'Full name:'
@@ -95,6 +98,7 @@ en:
     arc_issues:
       prompt: Select a task to view
       caption: '%{caption}'
+      no_closed_issues: 'No closed issues'
     set_issue_context:
       time_close: 'Closed %{closed_on}'
       history: '%{created_on} %{user}: %{notes} %{detail}'

@@ -1,36 +1,12 @@
+require_relative 'telegram_bot_helper'
+
 module RedmineHooks
   class IssuesEditAfterSaveHook < Redmine::Hook::Listener
     #include Telegram::Bot::ConfigMethods
     #include Telegram::Bot::UpdatesController::Translation
+    include TelegramBotHelper
 
-    def search_dir(dir, &callback)
-      return if !File.exist?(dir)
-      Dir.each_child(dir) do |d|
-        name = File.join(dir, d)
-        if File.directory?(name)
-          search_dir(name, &callback)
-        else
-          callback.call name
-        end
-      end
-    end
 
-    def file_path_key(cache_path, path)
-      fname = path[cache_path.to_s.size..-1].split(File::SEPARATOR, 4).last
-      URI.decode_www_form_component(fname, Encoding::UTF_8)
-    end
-
-    def send_message(chat_id, text, list=[])
-      Thread.new {
-        begin
-          client = Telegram::Bot::Client.new(token)
-          client.async(false)
-          client.send_message(chat_id: "#{chat_id}", text: text, reply_markup: { inline_keyboard: list })
-        rescue Exception => e
-          Rails.logger.error "Telegram bot error #{e}"
-        end
-      }
-    end
 
     def get_files(context)
       files = []
@@ -45,37 +21,6 @@ module RedmineHooks
       return files
     end
 
-    def send_photo(chat_id, file, caption)
-      Thread.new {
-        begin
-          client = Telegram::Bot::Client.new(token)
-          client.async(false)
-          client.send_photo(chat_id: "#{chat_id}", photo: File.open(file), caption: caption)
-        rescue Exception => e
-          Rails.logger.error "Telegram bot error #{e}"
-        end
-      }
-    end
-
-    def send_document(chat_id, file, caption)
-      Thread.new {
-        begin
-          client = Telegram::Bot::Client.new(token)
-          client.async(false)
-          client.send_document(chat_id: "#{chat_id}", document: File.open(file), caption: caption)
-        rescue Exception => e
-          Rails.logger.error "Telegram bot error #{e}"
-        end
-      }
-    end
-
-    def token
-      return Setting.plugin_telegram['bot_token']
-    end
-
-    def lang
-      return Setting.default_language
-    end
 
     def get_issue_button(issue)
       callback_action = 'set_issue_context'

@@ -1,4 +1,5 @@
 require File.dirname(__FILE__) + '/lib/redmine_hooks/issues_edit_after_save_hook.rb'
+require File.dirname(__FILE__) + '/lib/redmine_hooks/user_patch.rb'
 require File.dirname(__FILE__) + '/lib/poller.rb'
 
 Redmine::Plugin.register :telegram do
@@ -12,6 +13,8 @@ end
 Poller::init()
 
 if Rails.env.development?
+  console = ActiveSupport::Logger.new(STDERR)
+  Rails.logger.extend ActiveSupport::Logger.broadcast console
   t = Thread.new {
    Poller::start()
 }
