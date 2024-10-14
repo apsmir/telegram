@@ -47,6 +47,7 @@ en:
     list_projects_context:
       prompt: To create an issue, select a project from the list
       get_issue_description: 'Enter the text of the issue:'
+      no_projects_available: 'There are no projects available. Please contact your administrator to set up access rights to projects.'
     message:
       content: |
         Issue not selected

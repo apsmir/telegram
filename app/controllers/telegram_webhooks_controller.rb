@@ -191,6 +191,9 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
     end
   end
 
+  def session_user
+    User.find_by_id(session['user_id'])
+  end
   def add_description_context(*args)
     begin
       issue = Issue.find(session[:active_issue_id])
@@ -318,10 +321,15 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
     bot_context :list_projects_context
     list = Project.
       where(id: project_ids).
+      where(Project.visible_condition(session_user)).
       map {|project|
       [{text: project.name, callback_data: "{ \"action\": \"#{callback_action}\", \"project_id\": \"#{project.id}\" }"}]
     }
-    respond_with :message, text: t('.prompt'), reply_markup: { inline_keyboard: list }
+    if list.size == 0
+      respond_with :message, text: t('.no_projects_available')
+    else
+      respond_with :message, text: t('.prompt'), reply_markup: { inline_keyboard: list }
+    end
   end
 
   def callback_query(data)
