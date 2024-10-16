@@ -64,7 +64,8 @@ module RedmineHooks
         search_dir(cache_path) do |fname|
           session = store.fetch(file_path_key(cache_path, fname))
           chat_id = session['chat_id']
-          if chat_id && ((session['user_id'] == issue.author_id) or (session['user_id'] == issue.assigned_to_id))
+          u_id = session['user_id']
+          if chat_id && ((u_id == issue.author_id) or (u_id == issue.assigned_to_id) or (issue.watcher_user_ids.include?(u_id)))
             if issue.id.to_s != session['active_issue_id'].to_s
               issue_num = l(:tg_in_issue_num, id:issue.id)
               button = get_issue_button(issue)
