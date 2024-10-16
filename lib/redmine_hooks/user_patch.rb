@@ -1,4 +1,4 @@
-require_relative 'telegram_bot_helper'
+require_relative '../telegram_bot_helper'
 
 module RedmineHooks
     module UserPatch

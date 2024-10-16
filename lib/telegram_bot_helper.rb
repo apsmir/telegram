@@ -1,9 +1,6 @@
 module TelegramBotHelper
 
   @bot_client = nil
-  def proc1
-    Rails.logger.info "proc1"
-  end
 
   def client
     if !@bot_client
@@ -14,7 +11,6 @@ module TelegramBotHelper
   end
 
   def search_dir(dir, &callback)
-    proc1
     return if !File.exist?(dir)
     Dir.each_child(dir) do |d|
       name = File.join(dir, d)
