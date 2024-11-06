@@ -7,6 +7,7 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
   include Telegram::Bot::UpdatesController::MessageContext
   include Telegram::Bot::UpdatesController::Session
   include Redmine::I18n
+  include Redmine::Hook::Helper
 
   def t(key, **options)
     if key.to_s.start_with?('.')
@@ -213,6 +214,11 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
         bot_context :add_description_context
         if issue.save
           respond_with :message, text: t('.success', id: issue.id)
+          call_hook(
+            :controller_issues_edit_after_save,
+            {:params => args, :issue => issue,
+             :journal => issue.current_journal}
+          )
         else
           raise Exception.new(issue.errors.full_messages)
         end
