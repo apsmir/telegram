@@ -186,6 +186,8 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
                               :filename => file_name,
                               :author => user,
                               :description => payload['caption'])
+      journal = issue.init_journal(user)
+      journal.notes = payload['caption']
       issue.attachments << att
     rescue Exception => e
       respond_with :message, text: t('.error', e: e)

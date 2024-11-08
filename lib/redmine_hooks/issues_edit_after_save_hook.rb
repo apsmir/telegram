@@ -54,7 +54,7 @@ module RedmineHooks
 
       return unless project_included(issue.project)
 
-      if !issue.notes.empty? || !issue.closed_on.nil? || journal
+      if !issue.notes.blank? || !issue.closed_on.nil? || journal
         d = journal.created_on
         d = Time.now.utc if d.nil?
         msg_time = convert_time_to_user_timezone(issue.author, d).strftime('%H:%M')
