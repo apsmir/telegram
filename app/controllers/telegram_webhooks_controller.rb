@@ -214,7 +214,7 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
     begin
       issue = Issue.find(session[:active_issue_id])
       user = User.find_by_id(session['user_id'])
-      if issue.closed_on.nil?
+      if available_project_ids.include?(issue.project_id) && issue.closed_on.nil?
         if issue.journals.empty?
           issue.description+= "\n" +args.join(' ')
         else
@@ -305,7 +305,7 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
   def arc_issues!(*args)
     callback_action = 'set_issue_context'
     list = Issue.
-            where(author_id: session[:user_id], project_id: project_ids).
+            where(author_id: session[:user_id], project_id: available_project_ids).
             where.not(closed_on: nil).
             map {|issue| [{
               text: t('.caption', caption:issue.to_s) ,
@@ -323,11 +323,19 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
     return Setting.plugin_telegram['notified_project_ids'].to_a
   end
 
+  def available_project_ids
+    list = Project.
+      where(id: project_ids).
+      where(Project.visible_condition(session_user))
+    list.ids
+  end
+
   def my_issues!(*args)
     callback_action = 'set_issue_context'
     list = Issue.
-        where(author_id: session[:user_id], closed_on: nil).
-        where(project_id: project_ids).
+        where('author_id=? or assigned_to_id=?',  session[:user_id], session[:user_id]).
+        where(closed_on: nil).
+        where(project_id: available_project_ids).
         map {|issue|
         [{
           text: t('.caption', caption:issue.to_s) ,

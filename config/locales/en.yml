@@ -31,6 +31,7 @@
 
 en:
   tg_issue_response: "answered "
+  tg_issue_num_created: create issue №%{id}
   tg_issue_closed: "The task is closed. Task number"
   tg_user_not_registered: Registration failed. To register, run the command /start
   tg_is_blocked: User blocked. Please contact your administrator

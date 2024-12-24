@@ -92,5 +92,38 @@ module RedmineHooks
         end
       end
     end
+
+    def controller_issues_new_after_save(context = { })
+      return unless Setting.plugin_telegram['bot_enabled'].to_i > 0
+
+      issue = context[:issue]
+
+      return unless project_included(issue.project)
+
+        msg_time = convert_time_to_user_timezone(issue.author, issue.created_on).strftime('%H:%M')
+        user = issue.author
+        store = Telegram::Bot::UpdatesController.session_store
+        cache_path = store.cache_path
+        search_dir(cache_path) do |fname|
+          session = store.fetch(file_path_key(cache_path, fname))
+          chat_id = session['chat_id']
+          u_id = session['user_id']
+          if chat_id && user.id != u_id && ( (u_id == issue.assigned_to_id) or (issue.watcher_user_ids.include?(u_id)))
+            issue_num = l(:tg_issue_num_created, id:issue.id)
+            button = get_issue_button(issue)
+            send_message(chat_id,
+                         "#{msg_time} #{user.firstname} #{issue_num} :#{issue.subject} #{issue.description}",
+                         button)
+            sleep 0.1
+            issue.attachments.each do |att|
+                if att.is_image?
+                  send_photo(chat_id, att.diskfile, att.description)
+                else
+                  send_document(chat_id, att.diskfile, att.description)
+                end
+            end
+          end
+        end
+    end
   end
 end
