@@ -6,7 +6,7 @@ Redmine::Plugin.register :telegram do
   name 'Redmine telegram bot plugin'
   author 'Alexey Smirnov'
   description 'Redmine telegram bot plugin'
-  version '1.0'
+  version '1.1'
   settings default: {'empty' => true}, partial: 'settings/telegram_settings'
 end
 
