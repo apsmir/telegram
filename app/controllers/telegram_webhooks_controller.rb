@@ -171,6 +171,7 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
       if issue.save
         session[:active_issue_id] = issue.id
         respond_with :message, text: t('.success', id: issue.id)
+        call_hook(:controller_issues_new_after_save, {:params => args, :issue => issue})
         bot_context :add_description_context
       else
         raise Exception.new(issue.errors.full_messages)
@@ -215,7 +216,7 @@ class TelegramWebhooksController < Telegram::Bot::UpdatesController
       issue = Issue.find(session[:active_issue_id])
       user = User.find_by_id(session['user_id'])
       if available_project_ids.include?(issue.project_id) && issue.closed_on.nil?
-        if issue.journals.empty?
+        if issue.journals.empty? && session['user_id'] == issue.author_id
           issue.description+= "\n" +args.join(' ')
         else
           issue.init_journal(user, args.join(' '))

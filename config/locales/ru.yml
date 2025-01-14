@@ -1,5 +1,5 @@
 ru:
-  tg_issue_response: "ответил "
+  tg_issue_response: " обновлено "
   tg_issue_num_created: создал задачу №%{id}
   tg_issue_closed: "Задача закрыта. Номер задачи"
   tg_user_not_registered: Регистрация не пройдена. Для регистрации выполните команду /start
