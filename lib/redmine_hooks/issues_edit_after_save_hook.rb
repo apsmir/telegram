@@ -77,7 +77,7 @@ module RedmineHooks
               issue_num = ''
               button = []
             end
-            s_detail = journal ? ActionView::Base.full_sanitizer.sanitize(details_to_strings(journal.details).join(' ')) : issue.description
+            s_detail = journal ? ActionView::Base.full_sanitizer.sanitize(details_to_strings(journal.details, true).join(' ')) : issue.description
             send_message(chat_id,
                          "#{msg_time} #{issue_num} #{l(:tg_issue_response)} #{user.firstname} : #{issue.notes}
                           #{s_detail}",
